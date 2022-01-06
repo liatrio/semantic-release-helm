@@ -1,0 +1,45 @@
+{
+    "name": "@liatrio/semantic-release-helm",
+    "version": "0.0.0",
+    "description": "semantic-release plugin for publishing helm charts",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/liatrio/semantic-release-helm.git"
+    },
+    "keywords": [
+        "semantic-release",
+        "helm"
+    ],
+    "author": "Liatrio",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/liatrio/semantic-release-helm/issues"
+    },
+    "engines": {
+        "node": ">=16"
+    },
+    "homepage": "https://github.com/liatrio/semantic-release-helm#readme",
+    "dependencies": {
+        "@octokit/rest": "^18.12.0",
+        "@semantic-release/error": "^3.0.0",
+        "aggregate-error": "^3.1.0",
+        "execa": "^5.1.1",
+        "gh-pages": "^3.2.3",
+        "got": "^11.8.3",
+        "parse-github-url": "^1.0.2",
+        "yawn-yaml": "^1.5.0"
+    },
+    "peerDependencies": {
+        "semantic-release": "^18.0.1"
+    },
+    "prettier": {
+        "tabWidth": 4
+    },
+    "devDependencies": {
+        "prettier": "^2.5.1"
+    }
+}

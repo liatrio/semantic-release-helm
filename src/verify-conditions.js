@@ -15,11 +15,11 @@ const verifyConditions = async (
     try {
         const version = await helmVersion();
 
-        logger.log("Using Helm Version %s", version);
+        logger.log("Using Helm version %s", version);
     } catch (error) {
         errors.push(
             new SemanticReleaseError(
-                `Error verifying helm version: ${error.message}`
+                `Error verifying Helm version: ${error.message}`
             )
         );
     }

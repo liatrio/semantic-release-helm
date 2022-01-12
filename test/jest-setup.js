@@ -7,6 +7,15 @@ global.pluginConfig = {
     githubPagesBranch: chance.word(),
 };
 
+global.expectedRepoOwner = chance.word();
+global.expectedRepoName = chance.word();
+
 global.context = {
-    cwd: chance.word()
+    cwd: chance.word(),
+    logger: {
+        log: jest.fn()
+    },
+    options: {
+        repositoryUrl: `https://github.com/${expectedRepoOwner}/${expectedRepoName}`
+    }
 };

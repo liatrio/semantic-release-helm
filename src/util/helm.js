@@ -1,5 +1,7 @@
 const execa = require("execa");
 const path = require("path");
+const fs = require("fs/promises");
+const YAML = require("yawn-yaml/cjs");
 
 const helmVersion = async () => {
     const { stdout: version } = await execa("helm", [
@@ -30,9 +32,25 @@ const helmRepoIndex = (dir, url, mergeWith) => {
     return execa("helm", args);
 };
 
+const updateHelmChartVersion = async (chartPath, version) => {
+    const chartYamlFile = path.join(chartPath, "Chart.yaml");
+    const chartYaml = await fs.readFile(chartYamlFile);
+
+    const doc = new YAML(chartYaml.toString());
+
+    doc.json = {
+        ...doc.json,
+        version,
+        appVersion: version
+    };
+
+    await fs.writeFile(chartYamlFile, doc.yaml);
+};
+
 module.exports = {
     helmVersion,
     helmLint,
     helmPackage,
-    helmRepoIndex
+    helmRepoIndex,
+    updateHelmChartVersion
 };

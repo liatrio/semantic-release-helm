@@ -1,13 +1,12 @@
 const fs = require("fs/promises");
 const path = require("path");
-const YAML = require("yawn-yaml/cjs");
 const parseGithubUrl = require("parse-github-url");
 const got = require("got");
 
 const { getOctokit } = require("./util/octokit");
 const { createTempDir } = require("./util/temp-dir");
 const { getChartAssets } = require("./util/chart-assets");
-const { helmPackage, helmRepoIndex } = require("./util/helm");
+const { helmPackage, helmRepoIndex, updateHelmChartVersion } = require("./util/helm");
 
 const prepare = async (
     { charts, githubPagesBranch = "gh-pages" },
@@ -27,18 +26,7 @@ const prepare = async (
     // package helm charts into tarball
     await Promise.all(
         charts.map(async (chart) => {
-            const chartYamlFile = path.join(chart, "Chart.yaml");
-            const chartYaml = await fs.readFile(chartYamlFile);
-
-            const doc = new YAML(chartYaml.toString());
-
-            doc.json = {
-                ...doc.json,
-                version,
-                appVersion: version
-            };
-
-            await fs.writeFile(chartYamlFile, doc.yaml);
+            await updateHelmChartVersion(chart, version);
 
             await helmPackage(chart, tempDir);
         })

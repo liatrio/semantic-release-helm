@@ -1,9 +1,9 @@
-const execa = require("execa");
 const SemanticReleaseError = require("@semantic-release/error");
 const parseGithubUrl = require("parse-github-url");
 const AggregateError = require("aggregate-error");
 
 const { getOctokit } = require("./util/octokit");
+const { helmVersion, helmLint } = require("./util/helm");
 
 const verifyConditions = async (
     { charts, githubPagesBranch = "gh-pages" },
@@ -14,12 +14,9 @@ const verifyConditions = async (
 
     // verify that Helm is installed
     try {
-        const { stdout: helmVersion } = await execa("helm", [
-            "version",
-            "--template='{{.Version}}'",
-        ]);
+        const version = await helmVersion();
 
-        logger.log("Using Helm Version %s", helmVersion);
+        logger.log("Using Helm Version %s", version);
     } catch (error) {
         errors.push(
             new SemanticReleaseError(
@@ -39,7 +36,7 @@ const verifyConditions = async (
         await Promise.all(
             charts.map(async (chart) => {
                 try {
-                    await execa("helm", ["lint", chart]);
+                    await helmLint(chart);
                 } catch (error) {
                     errors.push(
                         new SemanticReleaseError(
@@ -56,7 +53,7 @@ const verifyConditions = async (
     try {
         const response = await octokit.rest.repos.get({
             owner,
-            repo,
+            repo
         });
 
         if (!response.data.has_pages) {
@@ -79,7 +76,7 @@ const verifyConditions = async (
         await octokit.rest.repos.getBranch({
             owner,
             repo,
-            branch: githubPagesBranch,
+            branch: githubPagesBranch
         });
     } catch (error) {
         errors.push(
@@ -95,5 +92,5 @@ const verifyConditions = async (
 };
 
 module.exports = {
-    verifyConditions,
+    verifyConditions
 };

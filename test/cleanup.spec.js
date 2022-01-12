@@ -1,4 +1,5 @@
-jest.dontMock("../src/cleanup");
+jest.mock("../src/util/temp-dir");
+jest.mock("../src/util/chart-assets");
 
 const { cleanup } = require("../src/cleanup");
 const { deleteTempDir } = require("../src/util/temp-dir");

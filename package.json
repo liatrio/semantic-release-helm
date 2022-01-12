@@ -43,5 +43,20 @@
   },
   "prettier": {
     "tabWidth": 4
+  },
+  "jest": {
+    "collectCoverage": true,
+    "coverageDirectory": ".jest/coverage",
+    "cacheDirectory": ".jest/cache",
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!index.js",
+      "!**node_modules/**",
+      "!**.jest/**",
+      "!<rootDir>/test/jest-setup.js"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/jest-setup.js"
+    ]
   }
 }

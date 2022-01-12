@@ -3,7 +3,7 @@ const path = require("path");
 const parseGithubUrl = require("parse-github-url");
 const got = require("got");
 
-const { getOctokit } = require("./util/octokit");
+const { getRepositoryPages } = require("./util/github");
 const { createTempDir } = require("./util/temp-dir");
 const { getChartAssets } = require("./util/chart-assets");
 const { helmPackage, helmRepoIndex, updateHelmChartVersion } = require("./util/helm");
@@ -17,8 +17,6 @@ const prepare = async (
         options: { repositoryUrl }
     }
 ) => {
-    const octokit = getOctokit();
-
     // create temp directory for work
     const tempDir = await createTempDir();
     logger.log(`Created temp directory for helm package assets: ${tempDir}`);
@@ -46,11 +44,8 @@ const prepare = async (
     // prepare chart repo's index.yaml
     let oldChartIndexFile;
     try {
-        const getPagesResponse = await octokit.rest.repos.getPages({
-            owner,
-            repo
-        });
-        const url = `${getPagesResponse.data.html_url}index.yaml`;
+        const {data: {html_url}} = await getRepositoryPages(owner, repo);
+        const url = `${html_url}index.yaml`;
 
         // fetch the existing index.yaml, we'll have to update this in order to publish the chart
         const response = await got(url, {

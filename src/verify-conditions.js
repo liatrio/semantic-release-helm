@@ -47,6 +47,16 @@ const verifyConditions = async (
         );
     }
 
+    // verify that the GITHUB_TOKEN env variable is set
+    // if it isn't set, throw immediately, since verification functions below won't work
+    if (!process.env.GITHUB_TOKEN) {
+        errors.push(
+            new SemanticReleaseError(`GITHUB_TOKEN environment variable must be set`)
+        );
+
+        throw new AggregateError(errors);
+    }
+
     // verify that github pages is enabled for this repository
     const { owner, name: repo } = parseGithubUrl(repositoryUrl);
     try {

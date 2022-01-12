@@ -52,8 +52,7 @@ describe("verify conditions", () => {
     it("should verify that the specified branch exists", async () => {
         await verifyConditions(pluginConfig, context);
 
-        expect(getRepositoryBranch).toHaveBeenCalledWith(expectedRepoOwner, expectedRepoName, pluginConfig.githubPagesBranch
-        );
+        expect(getRepositoryBranch).toHaveBeenCalledWith(expectedRepoOwner, expectedRepoName, pluginConfig.githubPagesBranch);
     });
 
     describe("when helm is not installed", () => {

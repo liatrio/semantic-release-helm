@@ -1,7 +1,6 @@
 jest.mock("../src/util/github");
 jest.mock("../src/util/helm");
 
-const SemanticReleaseError = require("@semantic-release/error");
 const AggregateError = require("aggregate-error");
 
 const { verifyConditions } = require("../src/verify-conditions");
@@ -65,6 +64,21 @@ describe("verify conditions", () => {
         it("should throw an error", async () => {
             await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow(AggregateError);
             await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow("Error verifying Helm version");
+        });
+    });
+
+    describe("when the `charts` config option is not set", () => {
+        beforeEach(() => {
+            delete pluginConfig.charts;
+        });
+
+        afterEach(() => {
+            pluginConfig.charts = chance.n(chance.word, chance.d6());
+        });
+
+        it("should throw an error", async () => {
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow(AggregateError);
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow("Expected `charts` option to be set with at least one chart path");
         });
     });
 });

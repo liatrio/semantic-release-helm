@@ -45,6 +45,7 @@
     "tabWidth": 4
   },
   "jest": {
+    "automock": true,
     "collectCoverage": true,
     "coverageDirectory": ".jest/coverage",
     "cacheDirectory": ".jest/cache",

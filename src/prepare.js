@@ -1,13 +1,12 @@
 const fs = require("fs/promises");
 const path = require("path");
-const YAML = require("yawn-yaml/cjs");
-const execa = require("execa");
 const parseGithubUrl = require("parse-github-url");
 const got = require("got");
 
-const { getOctokit } = require("./util/octokit");
+const { getRepositoryPages } = require("./util/github");
 const { createTempDir } = require("./util/temp-dir");
 const { getChartAssets } = require("./util/chart-assets");
+const { helmPackage, helmRepoIndex, updateHelmChartVersion } = require("./util/helm");
 
 const prepare = async (
     { charts, githubPagesBranch = "gh-pages" },
@@ -15,11 +14,9 @@ const prepare = async (
         cwd,
         logger,
         nextRelease: { version, gitTag },
-        options: { repositoryUrl },
+        options: { repositoryUrl }
     }
 ) => {
-    const octokit = getOctokit();
-
     // create temp directory for work
     const tempDir = await createTempDir();
     logger.log(`Created temp directory for helm package assets: ${tempDir}`);
@@ -27,20 +24,9 @@ const prepare = async (
     // package helm charts into tarball
     await Promise.all(
         charts.map(async (chart) => {
-            const chartYamlFile = path.join(chart, "Chart.yaml");
-            const chartYaml = await fs.readFile(chartYamlFile);
+            await updateHelmChartVersion(chart, version);
 
-            const doc = new YAML(chartYaml.toString());
-
-            doc.json = {
-                ...doc.json,
-                version,
-                appVersion: version,
-            };
-
-            await fs.writeFile(chartYamlFile, doc.yaml);
-
-            await execa("helm", ["package", chart, "--destination", tempDir]);
+            await helmPackage(chart, tempDir);
         })
     );
 
@@ -56,17 +42,14 @@ const prepare = async (
     const { owner, name: repo } = parseGithubUrl(repositoryUrl);
 
     // prepare chart repo's index.yaml
-    let indexFileExists = false;
+    let oldChartIndexFile;
     try {
-        const getPagesResponse = await octokit.rest.repos.getPages({
-            owner,
-            repo,
-        });
-        const url = `${getPagesResponse.data.html_url}index.yaml`;
+        const {data: {html_url}} = await getRepositoryPages(owner, repo);
+        const url = `${html_url}index.yaml`;
 
         // fetch the existing index.yaml, we'll have to update this in order to publish the chart
         const response = await got(url, {
-            throwHttpErrors: false,
+            throwHttpErrors: false
         });
 
         if (response.statusCode === 200) {
@@ -74,28 +57,16 @@ const prepare = async (
                 path.join(tempDir, "current-index.yaml"),
                 response.body
             );
-            indexFileExists = true;
+            oldChartIndexFile = "current-index.yaml";
         }
     } catch (error) {
         // this error will be thrown if there isn't already an index.yaml to update
-        logger.log(`index.yaml file not found on GitHub pages site`);
+        logger.log("index.yaml file not found on GitHub pages site");
     }
 
-    const helmArgs = [
-        "repo",
-        "index",
-        tempDir,
-        "--url",
-        `https://github.com/${owner}/${repo}/releases/download/${gitTag}`,
-    ];
-
-    if (indexFileExists) {
-        helmArgs.push("--merge", path.join(tempDir, "current-index.yaml"));
-    }
-
-    await execa("helm", helmArgs);
+    await helmRepoIndex(tempDir, `https://github.com/${owner}/${repo}/releases/download/${gitTag}`, oldChartIndexFile);
 };
 
 module.exports = {
-    prepare,
+    prepare
 };

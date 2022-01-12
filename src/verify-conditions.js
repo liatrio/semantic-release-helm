@@ -1,25 +1,21 @@
-const execa = require("execa");
 const SemanticReleaseError = require("@semantic-release/error");
 const parseGithubUrl = require("parse-github-url");
 const AggregateError = require("aggregate-error");
 
-const { getOctokit } = require("./util/octokit");
+const { getRepository, getRepositoryBranch } = require("./util/github");
+const { helmVersion, helmLint } = require("./util/helm");
 
 const verifyConditions = async (
     { charts, githubPagesBranch = "gh-pages" },
     { logger, options: { repositoryUrl } }
 ) => {
-    const errors = [],
-        octokit = getOctokit();
+    const errors = [];
 
     // verify that Helm is installed
     try {
-        const { stdout: helmVersion } = await execa("helm", [
-            "version",
-            "--template='{{.Version}}'",
-        ]);
+        const version = await helmVersion();
 
-        logger.log("Using Helm Version %s", helmVersion);
+        logger.log("Using Helm Version %s", version);
     } catch (error) {
         errors.push(
             new SemanticReleaseError(
@@ -39,7 +35,7 @@ const verifyConditions = async (
         await Promise.all(
             charts.map(async (chart) => {
                 try {
-                    await execa("helm", ["lint", chart]);
+                    await helmLint(chart);
                 } catch (error) {
                     errors.push(
                         new SemanticReleaseError(
@@ -51,15 +47,22 @@ const verifyConditions = async (
         );
     }
 
+    // verify that the GITHUB_TOKEN env variable is set
+    // if it isn't set, throw immediately, since verification functions below won't work
+    if (!process.env.GITHUB_TOKEN) {
+        errors.push(
+            new SemanticReleaseError(`GITHUB_TOKEN environment variable must be set`)
+        );
+
+        throw new AggregateError(errors);
+    }
+
     // verify that github pages is enabled for this repository
     const { owner, name: repo } = parseGithubUrl(repositoryUrl);
     try {
-        const response = await octokit.rest.repos.get({
-            owner,
-            repo,
-        });
+        const repository = await getRepository(owner, repo);
 
-        if (!response.data.has_pages) {
+        if (!repository.data.has_pages) {
             errors.push(
                 new SemanticReleaseError(
                     `GitHub pages is not enabled for repository ${owner}/${repo}`
@@ -76,11 +79,7 @@ const verifyConditions = async (
 
     // verify that the branch specified via the `githubPagesBranch` config is a valid branch
     try {
-        await octokit.rest.repos.getBranch({
-            owner,
-            repo,
-            branch: githubPagesBranch,
-        });
+        await getRepositoryBranch(owner, repo, githubPagesBranch);
     } catch (error) {
         errors.push(
             new SemanticReleaseError(
@@ -95,5 +94,5 @@ const verifyConditions = async (
 };
 
 module.exports = {
-    verifyConditions,
+    verifyConditions
 };

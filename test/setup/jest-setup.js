@@ -1,5 +1,8 @@
 const Chance = require("chance");
 const { when } = require("jest-when");
+const matchers = require("jest-extended");
+
+expect.extend(matchers);
 
 global.chance = new Chance();
 global.when = when;

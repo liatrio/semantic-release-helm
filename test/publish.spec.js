@@ -6,12 +6,12 @@ const { publish } = require("../src/publish");
 const { getTempDir } = require("../src/util/temp-dir");
 
 describe("publish", () => {
-    let tempDir;
+    let expectedTempDir;
 
     beforeEach(async () => {
-        tempDir = chance.word();
+        expectedTempDir = chance.word();
 
-        getTempDir.mockResolvedValue(tempDir);
+        getTempDir.mockResolvedValue(expectedTempDir);
         ghpages.publish.mockImplementation((dir, args, cb) => {
             cb();
         });
@@ -24,7 +24,7 @@ describe("publish", () => {
     });
 
     it("should delete the chart assets that were copied to the main directory for publishing the GitHub release", () => {
-        expect(ghpages.publish).toHaveBeenCalledWith(tempDir, {
+        expect(ghpages.publish).toHaveBeenCalledWith(expectedTempDir, {
             branch: pluginConfig.githubPagesBranch,
             src: "index.yaml",
         }, expect.any(Function));

@@ -57,7 +57,7 @@
     ],
     "coverageDirectory": ".jest/coverage",
     "setupFilesAfterEnv": [
-      "<rootDir>/test/jest-setup.js"
+      "<rootDir>/jest-setup.js"
     ],
     "resetMocks": true
   }

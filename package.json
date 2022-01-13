@@ -46,6 +46,13 @@
   "peerDependencies": {
     "semantic-release": "^18.0.1"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "src",
+    "index.js"
+  ],
   "prettier": {
     "tabWidth": 4
   },

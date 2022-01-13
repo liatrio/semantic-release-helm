@@ -80,4 +80,67 @@ describe("verify conditions", () => {
             await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow("Expected `charts` option to be set with at least one chart path");
         });
     });
+
+    describe("when one of the specified charts does not pass helm lint", () => {
+        let randomChart;
+
+        beforeEach(() => {
+            randomChart = chance.pickone(pluginConfig.charts)
+
+            when(helmLint).calledWith(randomChart).mockRejectedValue(new Error("Error: 1 chart(s) linted, 1 chart(s) failed"));
+        });
+
+        it("should throw an error", async () => {
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow(AggregateError);
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow(`Chart ${randomChart} failed validation`);
+        });
+    });
+
+    describe("when the GITHUB_TOKEN env variable is not set", () => {
+        beforeEach(() => {
+            delete process.env.GITHUB_TOKEN;
+        });
+
+        it("should throw an error", async () => {
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow(AggregateError);
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow("GITHUB_TOKEN environment variable must be set");
+        });
+    });
+
+    describe("when GitHub Pages is not enabled for the repository", () => {
+        beforeEach(() => {
+            getRepository.mockResolvedValue({
+                data: {
+                    has_pages: false
+                }
+            });
+        });
+
+        it("should throw an error", async () => {
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow(AggregateError);
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow("GitHub Pages is not enabled for repository");
+        });
+    });
+
+    describe("when an error occurs while checking repository for GitHub Pages", () => {
+        beforeEach(() => {
+            getRepository.mockRejectedValue("Error fetching repository");
+        });
+
+        it("should throw an error", async () => {
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow(AggregateError);
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow("Error fetching GitHub repository");
+        });
+    });
+
+    describe("when the specified GitHub Pages does not exist", () => {
+        beforeEach(() => {
+            getRepositoryBranch.mockRejectedValue("Error fetching repository branch");
+        });
+
+        it("should throw an error", async () => {
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow(AggregateError);
+            await expect(() => verifyConditions(pluginConfig, context)).rejects.toThrow(`Error fetching branch "${pluginConfig.githubPagesBranch}" for GitHub Pages`);
+        });
+    });
 });

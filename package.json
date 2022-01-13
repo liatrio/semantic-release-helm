@@ -1,6 +1,6 @@
 {
   "name": "@liatrio/semantic-release-helm",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "semantic-release plugin for publishing helm charts",
   "main": "index.js",
   "scripts": {

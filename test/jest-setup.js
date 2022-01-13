@@ -1,10 +1,12 @@
 const Chance = require("chance");
+const { when } = require("jest-when");
 
 global.chance = new Chance();
+global.when = when;
 
 global.pluginConfig = {
     charts: chance.n(chance.word, chance.d6()),
-    githubPagesBranch: chance.word(),
+    githubPagesBranch: chance.word()
 };
 
 global.expectedRepoOwner = chance.word();

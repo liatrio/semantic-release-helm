@@ -1,0 +1,14 @@
+branches:
+  - main
+repositoryUrl: 'git@github.com:liatrio/semantic-release-helm.git'
+preset: conventionalcommits
+plugins:
+  - '@semantic-release/commit-analyzer'
+  - '@semantic-release/release-notes-generator'
+  - '@semantic-release/npm'
+  - path: '@semantic-release/git'
+    assets:
+      - package.json
+  - path: '@semantic-release/github'
+    failComment: false
+    successComment: false

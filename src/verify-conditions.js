@@ -15,11 +15,11 @@ const verifyConditions = async (
     try {
         const version = await helmVersion();
 
-        logger.log("Using Helm Version %s", version);
+        logger.log("Using Helm version %s", version);
     } catch (error) {
         errors.push(
             new SemanticReleaseError(
-                `Error verifying helm version: ${error.message}`
+                `Error verifying Helm version: ${error.message}`
             )
         );
     }
@@ -65,7 +65,7 @@ const verifyConditions = async (
         if (!repository.data.has_pages) {
             errors.push(
                 new SemanticReleaseError(
-                    `GitHub pages is not enabled for repository ${owner}/${repo}`
+                    `GitHub Pages is not enabled for repository ${owner}/${repo}`
                 )
             );
         }
@@ -83,7 +83,7 @@ const verifyConditions = async (
     } catch (error) {
         errors.push(
             new SemanticReleaseError(
-                `Error fetching branch "${githubPagesBranch}" for GitHub pages: ${error.message}`
+                `Error fetching branch "${githubPagesBranch}" for GitHub Pages: ${error.message}`
             )
         );
     }

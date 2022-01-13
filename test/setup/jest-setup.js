@@ -17,6 +17,10 @@ global.context = {
     logger: {
         log: jest.fn()
     },
+    nextRelease: {
+        version: chance.word(),
+        gitTag: chance.word()
+    },
     options: {
         repositoryUrl: `https://github.com/${expectedRepoOwner}/${expectedRepoName}`
     }

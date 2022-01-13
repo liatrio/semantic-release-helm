@@ -53,11 +53,11 @@
       "!index.js",
       "!**node_modules/**",
       "!**.jest/**",
-      "!<rootDir>/test/jest-setup.js"
+      "!<rootDir>/test/setup/jest-setup.js"
     ],
     "coverageDirectory": ".jest/coverage",
     "setupFilesAfterEnv": [
-      "<rootDir>/test/jest-setup.js"
+      "<rootDir>/test/setup/jest-setup.js"
     ],
     "resetMocks": true
   }

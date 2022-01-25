@@ -113,11 +113,11 @@ const verifyConditions = async (
     }
 
     if (aws) {
-        // verify that both AWS region and s3 bucket are specified
+        // verify that AWS region, s3 bucket, and bucket url are specified
         // if not, throw immediately, since additional verification checks below won't work
-        if (!aws.region || !aws.bucket) {
+        if (!aws.region || !aws.bucket || !aws.bucketUrl) {
             errors.push(
-                new SemanticReleaseError("Expected both `aws.region` and `aws.bucket` config options to be set")
+                new SemanticReleaseError("Expected `aws.region`, `aws.bucket`, and `aws.bucketUrl` config options to be set")
             );
 
             throw new AggregateError(errors);

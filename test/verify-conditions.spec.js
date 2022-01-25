@@ -65,7 +65,7 @@ describe("verify conditions", () => {
 
             it("should throw an error", async () => {
                 await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
-                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Expected both `aws.region` and `aws.bucket` config options to be set");
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Expected `aws.region`, `aws.bucket`, and `aws.bucketUrl` config options to be set");
             });
         });
 
@@ -76,7 +76,18 @@ describe("verify conditions", () => {
 
             it("should throw an error", async () => {
                 await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
-                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Expected both `aws.region` and `aws.bucket` config options to be set");
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Expected `aws.region`, `aws.bucket`, and `aws.bucketUrl` config options to be set");
+            });
+        });
+
+        describe("when the AWS s3 bucket url is not specified", () => {
+            beforeEach(() => {
+                delete expectedPluginConfig.aws.bucketUrl;
+            });
+
+            it("should throw an error", async () => {
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Expected `aws.region`, `aws.bucket`, and `aws.bucketUrl` config options to be set");
             });
         });
 

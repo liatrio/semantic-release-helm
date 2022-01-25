@@ -102,6 +102,17 @@ describe("verify conditions", () => {
             expect(getRepositoryBranch).toHaveBeenCalledWith(expectedRepoOwner, expectedRepoName, expectedPluginConfig.github.pagesBranch);
         });
 
+        describe("when the `github.pagesBranch` config option is not set", () => {
+            beforeEach(() => {
+                delete expectedPluginConfig.github.pagesBranch;
+            });
+
+            it("should throw an error", async () => {
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Expected `github.pagesBranch` config option to be set");
+            });
+        });
+
         describe("when GitHub Pages is not enabled for the repository", () => {
             beforeEach(() => {
                 getRepository.mockResolvedValue({
@@ -136,6 +147,17 @@ describe("verify conditions", () => {
             it("should throw an error", async () => {
                 await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
                 await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(`Error fetching branch "${expectedPluginConfig.github.pagesBranch}" for GitHub Pages`);
+            });
+        });
+
+        describe("when the GITHUB_TOKEN env variable is not set", () => {
+            beforeEach(() => {
+                delete process.env.GITHUB_TOKEN;
+            });
+
+            it("should throw an error", async () => {
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("GITHUB_TOKEN environment variable must be set");
             });
         });
     });
@@ -199,14 +221,28 @@ describe("verify conditions", () => {
         });
     });
 
-    describe("when the GITHUB_TOKEN env variable is not set", () => {
+    describe("when neither `github` nor `aws` config options are set", () => {
         beforeEach(() => {
-            delete process.env.GITHUB_TOKEN;
+            expectedPluginConfig = {
+                charts: createGitHubPluginConfig().charts
+            };
         });
 
         it("should throw an error", async () => {
             await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
-            await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("GITHUB_TOKEN environment variable must be set");
+            await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Expected either `aws` or `github` config options to be set");
+        });
+    });
+
+    describe("when both `github` and `aws` config options are set", () => {
+        beforeEach(() => {
+            expectedPluginConfig = createGitHubPluginConfig();
+            expectedPluginConfig.aws = createAWSPluginConfig().aws;
+        });
+
+        it("should throw an error", async () => {
+            await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
+            await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Expected either `aws` or `github` config options to be set");
         });
     });
 });

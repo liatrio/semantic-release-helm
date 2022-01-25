@@ -9,7 +9,7 @@ const { getChartAssets } = require("./util/chart-assets");
 const { helmPackage, helmRepoIndex, updateHelmChartVersion } = require("./util/helm");
 
 const prepare = async (
-    { charts, githubPagesBranch = "gh-pages" },
+    { charts },
     {
         cwd,
         logger,
@@ -44,7 +44,7 @@ const prepare = async (
     // prepare chart repo's index.yaml
     let oldChartIndexFile;
     try {
-        const {data: {html_url}} = await getRepositoryPages(owner, repo);
+        const { data: { html_url } } = await getRepositoryPages(owner, repo);
         const url = `${html_url}index.yaml`;
 
         // fetch the existing index.yaml, we'll have to update this in order to publish the chart

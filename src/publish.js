@@ -5,15 +5,15 @@ const ghpagesPublish = promisify(ghpages.publish);
 
 const { getTempDir } = require("./util/temp-dir");
 
-const publish = async ({ githubPagesBranch = "gh-pages" }) => {
+const publish = async ({ github: { pagesBranch } }) => {
     const tempDir = await getTempDir();
 
     await ghpagesPublish(tempDir, {
-        branch: githubPagesBranch,
-        src: "index.yaml",
+        branch: pagesBranch,
+        src: "index.yaml"
     });
 };
 
 module.exports = {
-    publish,
+    publish
 };

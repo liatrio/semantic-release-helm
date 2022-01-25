@@ -15,15 +15,18 @@ const { getRepositoryPages } = require("../src/util/github");
 const { createTempDir } = require("../src/util/temp-dir");
 const { getChartAssets } = require("../src/util/chart-assets");
 const { helmPackage, helmRepoIndex, updateHelmChartVersion } = require("../src/util/helm");
+const { createGitHubPluginConfig } = require("./util/helpers");
 
 describe("prepare", () => {
-    let expectedTempDir,
+    let expectedPluginConfig,
+        expectedTempDir,
         expectedChartAssets,
         expectedPagesUrl,
         expectedIndexYamlBody,
         expectedReleaseDownloadPrefix;
 
     beforeEach(async () => {
+        expectedPluginConfig = createGitHubPluginConfig()
         expectedTempDir = chance.word();
         expectedChartAssets = chance.n(chance.word, chance.d6());
         expectedPagesUrl = chance.url() + "/";
@@ -53,7 +56,7 @@ describe("prepare", () => {
     });
 
     it("should create a temp directory for the chart assets and index.yaml", async () => {
-        await prepare(pluginConfig, context);
+        await prepare(expectedPluginConfig, context);
 
         expect(createTempDir).toHaveBeenCalled();
     });
@@ -61,9 +64,9 @@ describe("prepare", () => {
     it("should bump each chart's chart.yaml file, and package each helm chart into a tarball", async () => {
         // easier to assert call order when there's only one chart
         const randomChart = chance.word();
-        pluginConfig.charts = [randomChart];
+        expectedPluginConfig.charts = [randomChart];
 
-        await prepare(pluginConfig, context);
+        await prepare(expectedPluginConfig, context);
 
         expect(updateHelmChartVersion).toHaveBeenCalledWith(randomChart, context.nextRelease.version);
         expect(helmPackage).toHaveBeenCalledWith(randomChart, expectedTempDir);
@@ -72,9 +75,9 @@ describe("prepare", () => {
 
         // now with multiple charts
         const randomCharts = chance.n(chance.word, chance.d6() + 1);
-        pluginConfig.charts = randomCharts;
+        expectedPluginConfig.charts = randomCharts;
 
-        await prepare(pluginConfig, context);
+        await prepare(expectedPluginConfig, context);
 
         randomCharts.forEach((chart) => {
             expect(updateHelmChartVersion).toHaveBeenCalledWith(chart, context.nextRelease.version);
@@ -83,7 +86,7 @@ describe("prepare", () => {
     });
 
     it("should copy all chart tarballs to the repo home so they can be uploaded to the GitHub release", async () => {
-        await prepare(pluginConfig, context);
+        await prepare(expectedPluginConfig, context);
 
         expectedChartAssets.forEach((chartAsset) => {
             const expectedAssetFrom = path.join(expectedTempDir, chartAsset);
@@ -94,7 +97,7 @@ describe("prepare", () => {
     });
 
     it("should attempt to fetch the existing chart repo index.yaml file and write it to a local file", async () => {
-        await prepare(pluginConfig, context);
+        await prepare(expectedPluginConfig, context);
 
         const expectedChartYamlFilePath = path.join(expectedTempDir, "current-index.yaml");
 
@@ -106,7 +109,7 @@ describe("prepare", () => {
     });
 
     it("should update the index.yaml file via `helm repo index`", async () => {
-        await prepare(pluginConfig, context);
+        await prepare(expectedPluginConfig, context);
 
         expect(helmRepoIndex).toHaveBeenCalledWith(expectedTempDir, expectedReleaseDownloadPrefix, "current-index.yaml");
     });
@@ -119,7 +122,7 @@ describe("prepare", () => {
         });
 
         it("should create a brand new index.yaml file without merging", async () => {
-            await prepare(pluginConfig, context);
+            await prepare(expectedPluginConfig, context);
 
             expect(helmRepoIndex).toHaveBeenCalledWith(expectedTempDir, expectedReleaseDownloadPrefix, undefined);
         });

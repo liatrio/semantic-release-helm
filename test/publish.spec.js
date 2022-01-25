@@ -4,11 +4,14 @@ jest.mock("../src/util/temp-dir");
 const ghpages = require("gh-pages");
 const { publish } = require("../src/publish");
 const { getTempDir } = require("../src/util/temp-dir");
+const { createGitHubPluginConfig } = require("./util/helpers");
 
 describe("publish", () => {
-    let expectedTempDir;
+    let expectedPluginConfig,
+        expectedTempDir;
 
     beforeEach(async () => {
+        expectedPluginConfig = createGitHubPluginConfig();
         expectedTempDir = chance.word();
 
         getTempDir.mockResolvedValue(expectedTempDir);
@@ -16,7 +19,7 @@ describe("publish", () => {
             cb();
         });
 
-        await publish(pluginConfig);
+        await publish(expectedPluginConfig);
     });
 
     it("should fetch the temporary directory that was created for the helm chart assets", () => {
@@ -25,7 +28,7 @@ describe("publish", () => {
 
     it("should delete the chart assets that were copied to the main directory for publishing the GitHub release", () => {
         expect(ghpages.publish).toHaveBeenCalledWith(expectedTempDir, {
-            branch: pluginConfig.githubPagesBranch,
+            branch: expectedPluginConfig.github.pagesBranch,
             src: "index.yaml",
         }, expect.any(Function));
     });

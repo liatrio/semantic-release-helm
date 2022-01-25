@@ -6,7 +6,7 @@ const { getRepository, getRepositoryBranch } = require("./util/github");
 const { helmVersion, helmLint } = require("./util/helm");
 
 const verifyConditions = async (
-    { charts, githubPagesBranch = "gh-pages" },
+    { charts, github, aws },
     { logger, options: { repositoryUrl } }
 ) => {
     const errors = [];
@@ -47,45 +47,80 @@ const verifyConditions = async (
         );
     }
 
-    // verify that the GITHUB_TOKEN env variable is set
-    // if it isn't set, throw immediately, since verification functions below won't work
-    if (!process.env.GITHUB_TOKEN) {
+    // verify that either `aws` or `github` config option is set with correct info
+    // throw immediately if both are set, or if neither are set
+    if ((!github && !aws) || (github && aws)) {
         errors.push(
-            new SemanticReleaseError(`GITHUB_TOKEN environment variable must be set`)
+            new SemanticReleaseError(
+                "Expected either `aws` or `github` config options to be set"
+            )
         );
 
         throw new AggregateError(errors);
     }
 
-    // verify that github pages is enabled for this repository
-    const { owner, name: repo } = parseGithubUrl(repositoryUrl);
-    try {
-        const repository = await getRepository(owner, repo);
+    // github related checks
+    if (github) {
+        const { owner, name: repo } = parseGithubUrl(repositoryUrl);
 
-        if (!repository.data.has_pages) {
+        // verify that `pagesBranch` is set
+        if (!github.pagesBranch) {
+            errors.push(
+                new SemanticReleaseError("Expected `github.pagesBranch` config option to be set")
+            )
+        } else {
+            // verify that the branch specified via the `github.pagesBranch` config is a valid branch
+            try {
+                await getRepositoryBranch(owner, repo, github.pagesBranch);
+            } catch (error) {
+                errors.push(
+                    new SemanticReleaseError(
+                        `Error fetching branch "${github.pagesBranch}" for GitHub Pages: ${error.message}`
+                    )
+                );
+            }
+        }
+
+        // verify that the GITHUB_TOKEN env variable is set
+        // if it isn't set, throw immediately, since additional verification checks below won't work
+        if (!process.env.GITHUB_TOKEN) {
+            errors.push(
+                new SemanticReleaseError(`GITHUB_TOKEN environment variable must be set`)
+            );
+
+            throw new AggregateError(errors);
+        }
+
+        // verify that github pages is enabled for this repository
+        try {
+            const repository = await getRepository(owner, repo);
+
+            if (!repository.data.has_pages) {
+                errors.push(
+                    new SemanticReleaseError(
+                        `GitHub Pages is not enabled for repository ${owner}/${repo}`
+                    )
+                );
+            }
+        } catch (error) {
             errors.push(
                 new SemanticReleaseError(
-                    `GitHub Pages is not enabled for repository ${owner}/${repo}`
+                    `Error fetching GitHub repository: ${error.message}`
                 )
             );
         }
-    } catch (error) {
-        errors.push(
-            new SemanticReleaseError(
-                `Error fetching GitHub repository: ${error.message}`
-            )
-        );
     }
 
-    // verify that the branch specified via the `githubPagesBranch` config is a valid branch
-    try {
-        await getRepositoryBranch(owner, repo, githubPagesBranch);
-    } catch (error) {
-        errors.push(
-            new SemanticReleaseError(
-                `Error fetching branch "${githubPagesBranch}" for GitHub Pages: ${error.message}`
-            )
-        );
+    if (aws) {
+        // verify that both AWS region and s3 bucket are specified
+        // if not, throw immediately, since additional verification checks below won't work
+        if (!aws.region || !aws.bucket) {
+            errors.push(
+                new SemanticReleaseError("Expected both `aws.region` and `aws.bucket` config options to be set")
+            );
+
+            throw new AggregateError(errors);
+        }
     }
 
     if (errors.length > 0) {

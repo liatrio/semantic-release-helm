@@ -29,23 +29,24 @@ branches:
   - main
 preset: conventionalcommits
 plugins:
-- '@semantic-release/commit-analyzer'
-- '@semantic-release/release-notes-generator'
-- '@semantic-release/npm'                     # in the case of a Node.js app, automatically update the `version` field within `package.json`
-- path: '@liatrio/semantic-release-helm'
-  githubPagesBranch: gh-pages                 # this is the default value
-  charts:
-  - charts/my-app                             # assuming your repository has a `charts` folder with a single chart called `my-app`
-- path: '@semantic-release/git'
-  assets:                                     # both of these changes should be committed back to the main branch
-  - package.json                              # this is modified by the npm plugin, remove this if you aren't using the npm plugin
-  - charts/my-app/Chart.yaml                  # this is modified during the `prepare` step of the helm plugin 
-- path: '@semantic-release/github'
-  failComment: false
-  successComment: false
-  assets:
-  - path: 'my-app-*.tgz'                      # this tarball is created via `helm package` during the `prepare` step of the helm plugin. this must be uploaded to GitHub as a release asset
-    label: Helm Chart
+  - '@semantic-release/commit-analyzer'
+  - '@semantic-release/release-notes-generator'
+  - '@semantic-release/npm'                     # in the case of a Node.js app, automatically update the `version` field within `package.json`
+  - path: '@liatrio/semantic-release-helm'
+    github:
+      pagesBranch: gh-pages                     # this is the default value
+    charts:
+    - charts/my-app                             # assuming your repository has a `charts` folder with a single chart called `my-app`
+  - path: '@semantic-release/git'
+    assets:                                     # both of these changes should be committed back to the main branch
+    - package.json                              # this is modified by the npm plugin, remove this if you aren't using the npm plugin
+    - charts/my-app/Chart.yaml                  # this is modified during the `prepare` step of the helm plugin 
+  - path: '@semantic-release/github'
+    failComment: false
+    successComment: false
+    assets:
+    - path: 'my-app-*.tgz'                      # this tarball is created via `helm package` during the `prepare` step of the helm plugin. this must be uploaded to GitHub as a release asset
+      label: Helm Chart
 ```
 
 The example above covers a basic configuration of a Node.js based application that has its own Helm chart located within
@@ -73,10 +74,10 @@ The Git user associated with the configured Git credentials has to be able to di
 
 ### Options
 
-| Option              | Description                                                                                      | Default                      |
-|---------------------|--------------------------------------------------------------------------------------------------|------------------------------|
-| `charts`            | A list of paths to each Helm chart to publish. Paths are relative to the root of the repository. | no default (required option) |
-| `githubPagesBranch` | The branch that GitHub Pages is using.                                                           | `gh-pages`                   |
+| Option               | Description                                                                                      | Default                      |
+|----------------------|--------------------------------------------------------------------------------------------------|------------------------------|
+| `charts`             | A list of paths to each Helm chart to publish. Paths are relative to the root of the repository. | no default (required option) |
+| `github.pagesBranch` | The branch that GitHub Pages is using.                                                           | `gh-pages`                   |
 
 
 [github-pages]: https://pages.github.com/

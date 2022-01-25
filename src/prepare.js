@@ -1,15 +1,15 @@
 const fs = require("fs/promises");
 const path = require("path");
 const parseGithubUrl = require("parse-github-url");
-const got = require("got");
 
-const { getRepositoryPages } = require("./util/github");
+const { getFileFromPages } = require("./util/github");
 const { createTempDir } = require("./util/temp-dir");
 const { getChartAssets } = require("./util/chart-assets");
 const { helmPackage, helmRepoIndex, updateHelmChartVersion } = require("./util/helm");
+const { s3GetObject } = require("./util/aws");
 
 const prepare = async (
-    { charts },
+    { charts, github, aws },
     {
         cwd,
         logger,
@@ -39,32 +39,28 @@ const prepare = async (
         })
     );
 
-    const { owner, name: repo } = parseGithubUrl(repositoryUrl);
-
     // prepare chart repo's index.yaml
-    let oldChartIndexFile;
-    try {
-        const { data: { html_url } } = await getRepositoryPages(owner, repo);
-        const url = `${html_url}index.yaml`;
+    let oldChartIndexFile, chartRepoUrlPrefix;
+    if (github) {
+        const { owner, name: repo } = parseGithubUrl(repositoryUrl);
 
-        // fetch the existing index.yaml, we'll have to update this in order to publish the chart
-        const response = await got(url, {
-            throwHttpErrors: false
-        });
-
-        if (response.statusCode === 200) {
-            await fs.writeFile(
-                path.join(tempDir, "current-index.yaml"),
-                response.body
-            );
-            oldChartIndexFile = "current-index.yaml";
-        }
-    } catch (error) {
-        // this error will be thrown if there isn't already an index.yaml to update
-        logger.log("index.yaml file not found on GitHub pages site");
+        oldChartIndexFile = await getFileFromPages(owner, repo, "index.yaml");
+        chartRepoUrlPrefix = `https://github.com/${owner}/${repo}/releases/download/${gitTag}`;
+    } else {
+        oldChartIndexFile = await s3GetObject(aws.region, aws.bucket, "index.yaml");
+        chartRepoUrlPrefix = `${aws.bucketUrl}/assets`;
     }
 
-    await helmRepoIndex(tempDir, `https://github.com/${owner}/${repo}/releases/download/${gitTag}`, oldChartIndexFile);
+    if (oldChartIndexFile) {
+        await fs.writeFile(
+            path.join(tempDir, "current-index.yaml"),
+            oldChartIndexFile
+        );
+
+        return await helmRepoIndex(tempDir, chartRepoUrlPrefix, "current-index.yaml");
+    }
+
+    return await helmRepoIndex(tempDir, chartRepoUrlPrefix);
 };
 
 module.exports = {

@@ -4,7 +4,7 @@ const AggregateError = require("aggregate-error");
 
 const { getRepository, getRepositoryBranch } = require("./util/github");
 const { helmVersion, helmLint } = require("./util/helm");
-const { getCallerIdentity } = require("./util/aws");
+const { getCallerIdentity, s3HeadBucket } = require("./util/aws");
 
 const verifyConditions = async (
     { charts, github, aws },
@@ -123,6 +123,8 @@ const verifyConditions = async (
             throw new AggregateError(errors);
         }
 
+        // verify AWS authentication via the STS.GetCallerIdentity API.
+        // if this fails, throw immediately, since we won't be able to use any other AWS APIs
         try {
             const callerIdentity = await getCallerIdentity(aws.region);
 
@@ -131,8 +133,20 @@ const verifyConditions = async (
             errors.push(
                 new SemanticReleaseError(`Error determining AWS Caller Identity: ${error.message}`)
             );
+
+            throw new AggregateError(errors);
         }
 
+        // verify s3 bucket exists and that we have access to it
+        try {
+            await s3HeadBucket(aws.region, aws.bucket);
+
+            logger.log("Verified S3 Bucket exists");
+        } catch (error) {
+            errors.push(
+                new SemanticReleaseError(`Error running S3.HeadBucket: ${error.message}`)
+            );
+        }
     }
 
     if (errors.length > 0) {

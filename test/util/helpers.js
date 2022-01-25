@@ -5,11 +5,11 @@ const createGitHubPluginConfig = () => ({
     }
 });
 
-const createAWSPluginConfig = (bucket = chance.word()) => ({
+const createAWSPluginConfig = () => ({
     charts: chance.n(chance.word, chance.d6()),
     aws: {
         region: chance.pickone(["us-east-1", "us-west-1", "us-east-2"]),
-        bucket: `s3://${bucket}`
+        bucket: chance.word()
     },
 });
 

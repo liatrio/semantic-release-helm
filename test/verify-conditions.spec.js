@@ -7,7 +7,7 @@ const AggregateError = require("aggregate-error");
 const { verifyConditions } = require("../src/verify-conditions");
 const { getRepository, getRepositoryBranch } = require("../src/util/github");
 const { helmVersion, helmLint } = require("../src/util/helm");
-const { getCallerIdentity } = require("../src/util/aws");
+const { getCallerIdentity, s3HeadBucket } = require("../src/util/aws");
 const { createGitHubPluginConfig, createAWSPluginConfig } = require("./util/helpers");
 
 describe("verify conditions", () => {
@@ -43,12 +43,19 @@ describe("verify conditions", () => {
             expectedPluginConfig = createAWSPluginConfig(expectedBucketName);
 
             getCallerIdentity.mockResolvedValue(expectedCallerIdentity);
+            s3HeadBucket.mockResolvedValue(undefined);
         });
 
         it("should verify AWS authentication by getting the caller identity", async () => {
             await verifyConditions(expectedPluginConfig, context);
 
             expect(getCallerIdentity).toHaveBeenCalledWith(expectedPluginConfig.aws.region);
+        });
+
+        it("should verify access to the specified s3 bucket", async () => {
+            await verifyConditions(expectedPluginConfig, context);
+
+            expect(s3HeadBucket).toHaveBeenCalledWith(expectedPluginConfig.aws.region, expectedPluginConfig.aws.bucket);
         });
 
         describe("when the AWS region is not specified", () => {
@@ -81,6 +88,17 @@ describe("verify conditions", () => {
             it("should throw an error", async () => {
                 await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
                 await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Error determining AWS Caller Identity");
+            });
+        });
+
+        describe("when verifying access to the s3 bucket fails", () => {
+            beforeEach(() => {
+                s3HeadBucket.mockRejectedValue("Error getting s3 bucket");
+            });
+
+            it("should throw an error", async () => {
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Error running S3.HeadBucket");
             });
         });
     });

@@ -1,11 +1,13 @@
 jest.mock("../src/util/github");
 jest.mock("../src/util/helm");
+jest.mock("../src/util/aws");
 
 const AggregateError = require("aggregate-error");
 
 const { verifyConditions } = require("../src/verify-conditions");
 const { getRepository, getRepositoryBranch } = require("../src/util/github");
 const { helmVersion, helmLint } = require("../src/util/helm");
+const { getCallerIdentity } = require("../src/util/aws");
 const { createGitHubPluginConfig, createAWSPluginConfig } = require("./util/helpers");
 
 describe("verify conditions", () => {
@@ -32,11 +34,54 @@ describe("verify conditions", () => {
     });
 
     describe("aws checks", () => {
-        let expectedBucketName;
+        let expectedBucketName,
+            expectedCallerIdentity;
 
         beforeEach(() => {
             expectedBucketName = chance.word();
+            expectedCallerIdentity = chance.word();
             expectedPluginConfig = createAWSPluginConfig(expectedBucketName);
+
+            getCallerIdentity.mockResolvedValue(expectedCallerIdentity);
+        });
+
+        it("should verify AWS authentication by getting the caller identity", async () => {
+            await verifyConditions(expectedPluginConfig, context);
+
+            expect(getCallerIdentity).toHaveBeenCalledWith(expectedPluginConfig.aws.region);
+        });
+
+        describe("when the AWS region is not specified", () => {
+            beforeEach(() => {
+                delete expectedPluginConfig.aws.region;
+            });
+
+            it("should throw an error", async () => {
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Expected both `aws.region` and `aws.bucket` config options to be set");
+            });
+        });
+
+        describe("when the AWS s3 bucket is not specified", () => {
+            beforeEach(() => {
+                delete expectedPluginConfig.aws.bucket;
+            });
+
+            it("should throw an error", async () => {
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Expected both `aws.region` and `aws.bucket` config options to be set");
+            });
+        });
+
+        describe("when getting the AWS caller identity fails", () => {
+            beforeEach(() => {
+                getCallerIdentity.mockRejectedValue("Error getting caller identity");
+            });
+
+            it("should throw an error", async () => {
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow(AggregateError);
+                await expect(() => verifyConditions(expectedPluginConfig, context)).rejects.toThrow("Error determining AWS Caller Identity");
+            });
         });
     });
 

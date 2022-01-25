@@ -4,6 +4,7 @@ const AggregateError = require("aggregate-error");
 
 const { getRepository, getRepositoryBranch } = require("./util/github");
 const { helmVersion, helmLint } = require("./util/helm");
+const { getCallerIdentity } = require("./util/aws");
 
 const verifyConditions = async (
     { charts, github, aws },
@@ -67,7 +68,7 @@ const verifyConditions = async (
         if (!github.pagesBranch) {
             errors.push(
                 new SemanticReleaseError("Expected `github.pagesBranch` config option to be set")
-            )
+            );
         } else {
             // verify that the branch specified via the `github.pagesBranch` config is a valid branch
             try {
@@ -121,6 +122,17 @@ const verifyConditions = async (
 
             throw new AggregateError(errors);
         }
+
+        try {
+            const callerIdentity = await getCallerIdentity(aws.region);
+
+            logger.log(`AWS Caller Identity: ${callerIdentity}`);
+        } catch (error) {
+            errors.push(
+                new SemanticReleaseError(`Error determining AWS Caller Identity: ${error.message}`)
+            );
+        }
+
     }
 
     if (errors.length > 0) {

@@ -5,33 +5,32 @@ jest.mock("../src/util/github");
 jest.mock("../src/util/temp-dir");
 jest.mock("../src/util/chart-assets");
 jest.mock("../src/util/helm");
+jest.mock("../src/util/aws");
 
 const fs = require("fs/promises");
-const got = require("got");
 const path = require("path");
 
 const { prepare } = require("../src/prepare");
-const { getRepositoryPages } = require("../src/util/github");
+const { getFileFromPages } = require("../src/util/github");
 const { createTempDir } = require("../src/util/temp-dir");
 const { getChartAssets } = require("../src/util/chart-assets");
 const { helmPackage, helmRepoIndex, updateHelmChartVersion } = require("../src/util/helm");
-const { createGitHubPluginConfig } = require("./util/helpers");
+const { createGitHubPluginConfig, createAWSPluginConfig } = require("./util/helpers");
+const { s3GetObject } = require("../src/util/aws");
 
 describe("prepare", () => {
     let expectedPluginConfig,
         expectedTempDir,
         expectedChartAssets,
         expectedPagesUrl,
-        expectedIndexYamlBody,
-        expectedReleaseDownloadPrefix;
+        expectedIndexYamlBody;
 
     beforeEach(async () => {
-        expectedPluginConfig = createGitHubPluginConfig()
+        expectedPluginConfig = createGitHubPluginConfig();
         expectedTempDir = chance.word();
         expectedChartAssets = chance.n(chance.word, chance.d6());
         expectedPagesUrl = chance.url() + "/";
         expectedIndexYamlBody = chance.string();
-        expectedReleaseDownloadPrefix = `https://github.com/${expectedRepoOwner}/${expectedRepoName}/releases/download/${context.nextRelease.gitTag}`;
 
         createTempDir.mockResolvedValue(expectedTempDir);
 
@@ -44,15 +43,8 @@ describe("prepare", () => {
         fs.copyFile.mockResolvedValue();
         fs.writeFile.mockResolvedValue();
 
-        getRepositoryPages.mockResolvedValue({
-            data: {
-                html_url: expectedPagesUrl
-            }
-        });
-        got.mockResolvedValue({
-            statusCode: 200,
-            body: expectedIndexYamlBody
-        });
+        getFileFromPages.mockResolvedValue(expectedIndexYamlBody);
+        s3GetObject.mockResolvedValue(expectedIndexYamlBody);
     });
 
     it("should create a temp directory for the chart assets and index.yaml", async () => {
@@ -96,35 +88,88 @@ describe("prepare", () => {
         });
     });
 
-    it("should attempt to fetch the existing chart repo index.yaml file and write it to a local file", async () => {
-        await prepare(expectedPluginConfig, context);
+    describe("when using github pages as the helm chart repo", () => {
+        let expectedGitHubReleaseDownloadPrefix;
 
-        const expectedChartYamlFilePath = path.join(expectedTempDir, "current-index.yaml");
-
-        expect(getRepositoryPages).toHaveBeenCalledWith(expectedRepoOwner, expectedRepoName);
-        expect(got).toHaveBeenCalledWith(expectedPagesUrl + "index.yaml", {
-            throwHttpErrors: false
-        });
-        expect(fs.writeFile).toHaveBeenCalledWith(expectedChartYamlFilePath, expectedIndexYamlBody);
-    });
-
-    it("should update the index.yaml file via `helm repo index`", async () => {
-        await prepare(expectedPluginConfig, context);
-
-        expect(helmRepoIndex).toHaveBeenCalledWith(expectedTempDir, expectedReleaseDownloadPrefix, "current-index.yaml");
-    });
-
-    describe("when the chart repo does not already have an index.yaml file", () => {
         beforeEach(() => {
-            got.mockResolvedValue({
-                statusCode: 404
-            });
+            expectedGitHubReleaseDownloadPrefix = `https://github.com/${expectedRepoOwner}/${expectedRepoName}/releases/download/${context.nextRelease.gitTag}`;
         });
 
-        it("should create a brand new index.yaml file without merging", async () => {
+        it("should attempt to fetch the existing chart repo index.yaml file from GitHub pages and write it to a local file", async () => {
             await prepare(expectedPluginConfig, context);
 
-            expect(helmRepoIndex).toHaveBeenCalledWith(expectedTempDir, expectedReleaseDownloadPrefix, undefined);
+            const expectedChartYamlFilePath = path.join(expectedTempDir, "current-index.yaml");
+
+            expect(getFileFromPages).toHaveBeenCalledWith(expectedRepoOwner, expectedRepoName, "index.yaml");
+            expect(fs.writeFile).toHaveBeenCalledWith(expectedChartYamlFilePath, expectedIndexYamlBody);
+        });
+
+        it("should update the index.yaml file via `helm repo index`", async () => {
+            await prepare(expectedPluginConfig, context);
+
+            expect(helmRepoIndex).toHaveBeenCalledWith(expectedTempDir, expectedGitHubReleaseDownloadPrefix, "current-index.yaml");
+        });
+
+        it("should not attempt to make any AWS API calls", async () => {
+            await prepare(expectedPluginConfig, context);
+
+            expect(s3GetObject).not.toHaveBeenCalled();
+        });
+
+        describe("when the github chart repo does not already have an index.yaml file", () => {
+            beforeEach(() => {
+                getFileFromPages.mockResolvedValue(undefined);
+            });
+
+            it("should create a brand new index.yaml file without merging", async () => {
+                await prepare(expectedPluginConfig, context);
+
+                expect(helmRepoIndex).toHaveBeenCalledWith(expectedTempDir, expectedGitHubReleaseDownloadPrefix);
+                expect(fs.writeFile).not.toHaveBeenCalled();
+            });
+        });
+    });
+
+    describe("when using s3 as the helm chart repo", () => {
+        let expectedS3DownloadPrefix;
+
+        beforeEach(() => {
+            expectedPluginConfig = createAWSPluginConfig();
+            expectedS3DownloadPrefix = `${expectedPluginConfig.aws.bucketUrl}/assets`
+        });
+
+        it("should attempt to fetch the existing chart repo index.yaml file from the s3 bucket and write it to a local file", async () => {
+            await prepare(expectedPluginConfig, context);
+
+            const expectedChartYamlFilePath = path.join(expectedTempDir, "current-index.yaml");
+
+            expect(s3GetObject).toHaveBeenCalledWith(expectedPluginConfig.aws.region, expectedPluginConfig.aws.bucket, "index.yaml");
+            expect(fs.writeFile).toHaveBeenCalledWith(expectedChartYamlFilePath, expectedIndexYamlBody);
+        });
+
+        it("should update the index.yaml file via `helm repo index`", async () => {
+            await prepare(expectedPluginConfig, context);
+
+            expect(helmRepoIndex).toHaveBeenCalledWith(expectedTempDir, expectedS3DownloadPrefix, "current-index.yaml");
+        });
+
+        it("should not attempt to make any GitHub API calls", async () => {
+            await prepare(expectedPluginConfig, context);
+
+            expect(getFileFromPages).not.toHaveBeenCalled();
+        });
+
+        describe("when the s3 chart repo does not already have an index.yaml file", () => {
+            beforeEach(() => {
+                s3GetObject.mockResolvedValue(undefined);
+            });
+
+            it("should create a brand new index.yaml file without merging", async () => {
+                await prepare(expectedPluginConfig, context);
+
+                expect(helmRepoIndex).toHaveBeenCalledWith(expectedTempDir, expectedS3DownloadPrefix);
+                expect(fs.writeFile).not.toHaveBeenCalled();
+            });
         });
     });
 });

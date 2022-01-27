@@ -11,6 +11,6 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: liatrio/github-actions/conventional-pr-title@master
+      - uses: liatrio/github-actions/conventional-pr-title@conventional-pr-title-breaking
         with:
           token: ${{ secrets.GITHUB_TOKEN }}

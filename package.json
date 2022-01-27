@@ -24,10 +24,13 @@
   },
   "homepage": "https://github.com/liatrio/semantic-release-helm#readme",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.48.0",
+    "@aws-sdk/client-sts": "^3.48.0",
     "@octokit/rest": "^18.12.0",
     "@semantic-release/error": "^3.0.0",
     "aggregate-error": "^3.1.0",
     "execa": "^5.1.1",
+    "get-stream": "^6.0.1",
     "gh-pages": "^3.2.3",
     "got": "^11.8.3",
     "parse-github-url": "^1.0.2",
@@ -64,11 +67,11 @@
       "!index.js",
       "!**node_modules/**",
       "!**.jest/**",
-      "!<rootDir>/test/setup/jest-setup.js"
+      "!<rootDir>/test/util/jest-setup.js"
     ],
     "coverageDirectory": ".jest/coverage",
     "setupFilesAfterEnv": [
-      "<rootDir>/test/setup/jest-setup.js"
+      "<rootDir>/test/util/jest-setup.js"
     ],
     "resetMocks": true
   }

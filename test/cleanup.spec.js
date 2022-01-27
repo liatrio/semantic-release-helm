@@ -4,10 +4,11 @@ jest.mock("../src/util/chart-assets");
 const { cleanup } = require("../src/cleanup");
 const { deleteTempDir } = require("../src/util/temp-dir");
 const { deleteChartAssets } = require("../src/util/chart-assets");
+const { createGitHubPluginConfig } = require("./util/helpers");
 
 describe("cleanup", () => {
     beforeEach(async () => {
-        await cleanup(pluginConfig, context);
+        await cleanup(createGitHubPluginConfig(), context);
     });
 
     it("should delete the temporary directory that was created for the helm chart assets", () => {

@@ -5,7 +5,7 @@ const parseGithubUrl = require("parse-github-url");
 const { getFileFromPages } = require("./util/github");
 const { createTempDir } = require("./util/temp-dir");
 const { getChartAssets } = require("./util/chart-assets");
-const { helmPackage, helmRepoAdd, helmDependencyBuild, helmRepoIndex, updateHelmChartVersion } = require("./util/helm");
+const { helmPackage, helmRepoAdd, helmDependencyBuild, helmRepoIndex, updateHelmChartVersion, extractChartUrl } = require("./util/helm");
 const { s3GetObject } = require("./util/aws");
 
 const prepare = async (
@@ -21,19 +21,14 @@ const prepare = async (
     const tempDir = await createTempDir();
     logger.log(`Created temp directory for helm package assets: ${tempDir}`);
 
-    //extract dependency chart URL
-    const chartYamlFile = path.join(chart, "Chart.yaml");
-    const chartYaml = await fs.readFile(chartYamlFile);
-
-    const doc = new YAML(chartYaml.toString());
-
-    const url = doc.dependencies.repository;
-
     // package helm charts into tarball
     await Promise.all(
         charts.map(async (chart) => {
+
+            const chartUrl = await extractChartUrl(chart)
+
             await updateHelmChartVersion(chart, version);
-            await helmRepoAdd(url);
+            await helmRepoAdd(chartUrl);
             await helmDependencyBuild(chart);
             await helmPackage(chart, tempDir);
         })

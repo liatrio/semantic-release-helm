@@ -51,6 +51,16 @@ const updateHelmChartVersion = async (chartPath, version) => {
     await fs.writeFile(chartYamlFile, doc.yaml);
 };
 
+const extractChartUrl = async (chartpath) => {
+    //extract dependency chart URL
+    const chartYamlFile = path.join(chartPath, "Chart.yaml");
+    const chartYaml = await fs.readFile(chartYamlFile);
+
+    const doc = new YAML(chartYaml.toString());
+
+    return doc.dependencies.repository;
+}
+
 module.exports = {
     helmVersion,
     helmLint,
@@ -58,5 +68,6 @@ module.exports = {
     helmRepoIndex,
     updateHelmChartVersion,
     helmDependencyBuild,
-    helmRepoAdd
+    helmRepoAdd,
+    extractChartUrl
 };

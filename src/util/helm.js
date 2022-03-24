@@ -14,7 +14,7 @@ const helmVersion = async () => {
 
 const helmLint = (chart) => execa("helm", ["lint", chart]);
 
-const helmPackage = (chart, destination) => execa("helm", ["package", chart, "--destination", destination]);
+const helmPackage = (chart, destination) => execa("helm", ["package", chart, "--destination", destination, "-u"]);
 
 const helmRepoIndex = (dir, url, mergeWith) => {
     const args = [

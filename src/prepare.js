@@ -21,11 +21,19 @@ const prepare = async (
     const tempDir = await createTempDir();
     logger.log(`Created temp directory for helm package assets: ${tempDir}`);
 
+    //extract dependency chart URL
+    const chartYamlFile = path.join(chart, "Chart.yaml");
+    const chartYaml = await fs.readFile(chartYamlFile);
+
+    const doc = new YAML(chartYaml.toString());
+
+    const url = doc.dependencies.repository;
+
     // package helm charts into tarball
     await Promise.all(
         charts.map(async (chart) => {
             await updateHelmChartVersion(chart, version);
-            await helmRepoAdd(repositoryUrl);
+            await helmRepoAdd(url);
             await helmDependencyBuild(chart);
             await helmPackage(chart, tempDir);
         })

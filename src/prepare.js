@@ -5,7 +5,7 @@ const parseGithubUrl = require("parse-github-url");
 const { getFileFromPages } = require("./util/github");
 const { createTempDir } = require("./util/temp-dir");
 const { getChartAssets } = require("./util/chart-assets");
-const { helmPackage, helmRepoIndex, updateHelmChartVersion } = require("./util/helm");
+const { helmPackage, helmDependencyBuild, helmRepoIndex, updateHelmChartVersion } = require("./util/helm");
 const { s3GetObject } = require("./util/aws");
 
 const prepare = async (
@@ -25,7 +25,7 @@ const prepare = async (
     await Promise.all(
         charts.map(async (chart) => {
             await updateHelmChartVersion(chart, version);
-
+            await helmDependencyBuild(chart);
             await helmPackage(chart, tempDir);
         })
     );

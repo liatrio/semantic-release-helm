@@ -14,6 +14,8 @@ const helmVersion = async () => {
 
 const helmLint = (chart) => execa("helm", ["lint", chart]);
 
+const helmDependencyBuild = (chart) => execa("helm", ["dependency", "build", chart]);
+
 const helmPackage = (chart, destination) => execa("helm", ["package", chart, "--destination", destination]);
 
 const helmRepoIndex = (dir, url, mergeWith) => {
@@ -52,5 +54,6 @@ module.exports = {
     helmLint,
     helmPackage,
     helmRepoIndex,
-    updateHelmChartVersion
+    updateHelmChartVersion,
+    helmDependencyBuild
 };

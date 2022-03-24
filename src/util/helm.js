@@ -3,6 +3,9 @@ const path = require("path");
 const fs = require("fs/promises");
 const YAML = require("yawn-yaml/cjs");
 
+const extract_fs = require("fs");
+const extract_YAML = require('yaml');
+
 const helmVersion = async () => {
     const { stdout: version } = await execa("helm", [
         "version",
@@ -14,7 +17,7 @@ const helmVersion = async () => {
 
 const helmLint = (chart) => execa("helm", ["lint", chart]);
 
-const helmRepoAdd = (repo) => execa("helm", ["repo", "add", repo]);
+const helmRepoAdd = (repo, name) => execa("helm", ["repo", "add", name, repo]);
 
 const helmDependencyBuild = (chart) => execa("helm", ["dependency", "build", chart]);
 
@@ -54,11 +57,10 @@ const updateHelmChartVersion = async (chartPath, version) => {
 const extractChartUrl = async (chartPath) => {
     //extract dependency chart URL
     const chartYamlFile = path.join(chartPath, "Chart.yaml");
-    const chartYaml = await fs.readFile(chartYamlFile);
+    const file = extract_fs.readFileSync(chartYamlFile, 'utf8');
+    const result = extract_YAML.parse(file);
 
-    const doc = new YAML(chartYaml.toString());
-
-    return doc.dependencies.repository;
+    return result;
 }
 
 module.exports = {

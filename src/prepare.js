@@ -25,10 +25,10 @@ const prepare = async (
     await Promise.all(
         charts.map(async (chart) => {
 
-            const chartUrl = await extractChartUrl(chart)
+            const chartInfo = await extractChartUrl(chart)
 
             await updateHelmChartVersion(chart, version);
-            await helmRepoAdd(chartUrl);
+            await helmRepoAdd(chartInfo.dependencies[0].repository, chartInfo.name);
             await helmDependencyBuild(chart);
             await helmPackage(chart, tempDir);
         })

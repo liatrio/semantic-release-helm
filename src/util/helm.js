@@ -51,7 +51,7 @@ const updateHelmChartVersion = async (chartPath, version) => {
     await fs.writeFile(chartYamlFile, doc.yaml);
 };
 
-const extractChartUrl = async (chartpath) => {
+const extractChartUrl = async (chartPath) => {
     //extract dependency chart URL
     const chartYamlFile = path.join(chartPath, "Chart.yaml");
     const chartYaml = await fs.readFile(chartYamlFile);

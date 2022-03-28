@@ -57,7 +57,7 @@ const updateHelmChartVersion = async (chartPath, version) => {
 const extractChartUrl = async (chartPath) => {
     //extract dependency chart URL
     const chartYamlFile = path.join(chartPath, "Chart.yaml");
-    const file = extract_fs.readFileSync(chartYamlFile, 'utf8');
+    const file = await extract_fs.readFileSync(chartYamlFile, 'utf8');
     const result = extract_YAML.parse(file);
 
     return result;

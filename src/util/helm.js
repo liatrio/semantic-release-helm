@@ -17,7 +17,7 @@ const helmVersion = async () => {
 
 const helmLint = (chart) => execa("helm", ["lint", chart]);
 
-const helmRepoAdd = (repo, name) => execa("helm", ["repo", "add", name, repo]);
+const helmRepoAdd = (repo, name) => execa("helm", ["repo", "add", "mysql", repo]);
 
 const helmDependencyBuild = (chart) => execa("helm", ["dependency", "build", chart]);
 
@@ -60,7 +60,7 @@ const extractChartUrl = async (chartPath) => {
     const file = await extract_fs.readFileSync(chartYamlFile, 'utf8');
     const result = extract_YAML.parse(file);
 
-    return result;
+    return result.dependencies[0].repository;
 }
 
 module.exports = {

@@ -6,9 +6,7 @@ let tempDir;
 
 const createTempDir = async () => {
     if (!tempDir) {
-        tempDir = await fs.mkdtemp(
-            path.join(os.tmpdir(), "semantic-release-helm-")
-        );
+        tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "semantic-release-helm-"));
     }
 
     return tempDir;
@@ -16,13 +14,12 @@ const createTempDir = async () => {
 
 const getTempDir = () => (tempDir ? createTempDir() : Promise.resolve(tempDir));
 
-const deleteTempDir = () =>
-    tempDir
-        ? fs.rm(tempDir, {
-              recursive: true,
-              force: true,
-          })
-        : Promise.resolve();
+const deleteTempDir = () => (tempDir
+    ? fs.rm(tempDir, {
+        recursive: true,
+        force: true,
+    })
+    : Promise.resolve());
 
 module.exports = {
     createTempDir,

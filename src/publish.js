@@ -15,14 +15,14 @@ const publish = async ({ github, aws }, { logger }) => {
     if (github) {
         await ghpagesPublish(tempDir, {
             branch: github.pagesBranch,
-            src: "index.yaml"
+            src: "index.yaml",
         });
     } else {
         const indexFileContents = await readFile(path.join(tempDir, "index.yaml"));
         const chartAssets = await getChartAssets();
 
         await s3PutObject(aws.region, aws.bucket, "index.yaml", indexFileContents);
-        logger.log(`Successfully uploaded index.yaml`);
+        logger.log("Successfully uploaded index.yaml");
 
         await Promise.all(chartAssets.map(async (asset) => {
             const chartTarball = await readFile(path.join(tempDir, asset));
@@ -34,5 +34,5 @@ const publish = async ({ github, aws }, { logger }) => {
 };
 
 module.exports = {
-    publish
+    publish,
 };

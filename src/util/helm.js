@@ -9,7 +9,7 @@ const helmDependencyRepos = [];
 const helmVersion = async () => {
     const { stdout: version } = await execa("helm", [
         "version",
-        "--template='{{.Version}}'"
+        "--template='{{.Version}}'",
     ]);
 
     return version;
@@ -50,7 +50,7 @@ const helmRepoIndex = (dir, url, mergeWith) => {
         "index",
         dir,
         "--url",
-        url
+        url,
     ];
 
     if (mergeWith) {
@@ -69,7 +69,7 @@ const updateHelmChartVersion = async (chartPath, version) => {
     doc.json = {
         ...doc.json,
         version,
-        appVersion: version
+        appVersion: version,
     };
 
     await fs.writeFile(chartYamlFile, doc.yaml);
@@ -83,5 +83,5 @@ module.exports = {
     updateHelmChartVersion,
     helmDependencyBuild,
     helmRepoAddDependencies,
-    helmRepoRemoveDependencies
+    helmRepoRemoveDependencies,
 };

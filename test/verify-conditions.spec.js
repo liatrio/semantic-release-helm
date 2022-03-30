@@ -27,8 +27,8 @@ describe("verify conditions", () => {
 
         getRepository.mockResolvedValue({
             data: {
-                has_pages: true
-            }
+                has_pages: true,
+            },
         });
         getRepositoryBranch.mockResolvedValue(undefined);
     });
@@ -146,8 +146,8 @@ describe("verify conditions", () => {
             beforeEach(() => {
                 getRepository.mockResolvedValue({
                     data: {
-                        has_pages: false
-                    }
+                        has_pages: false,
+                    },
                 });
             });
 
@@ -253,7 +253,7 @@ describe("verify conditions", () => {
     describe("when neither `github` nor `aws` config options are set", () => {
         beforeEach(() => {
             expectedPluginConfig = {
-                charts: createGitHubPluginConfig().charts
+                charts: createGitHubPluginConfig().charts,
             };
         });
 

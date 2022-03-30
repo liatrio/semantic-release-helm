@@ -6,7 +6,7 @@ let octokit;
 const getOctokit = () => {
     if (!octokit) {
         octokit = new Github({
-            auth: process.env.GITHUB_TOKEN
+            auth: process.env.GITHUB_TOKEN,
         });
     }
 
@@ -15,24 +15,24 @@ const getOctokit = () => {
 
 const getRepository = (owner, repo) => getOctokit().rest.repos.get({
     owner,
-    repo
+    repo,
 });
 
 const getRepositoryBranch = (owner, repo, branch) => getOctokit().rest.repos.getBranch({
     owner,
     repo,
-    branch
+    branch,
 });
 
 const getFileFromPages = async (owner, repo, file) => {
-    const { data: { html_url } } = await getOctokit().rest.repos.getPages({
+    const { data } = await getOctokit().rest.repos.getPages({
         owner,
-        repo
+        repo,
     });
-    const url = `${html_url}${file}`;
+    const url = `${data.html_url}${file}`;
 
     const response = await got(url, {
-        throwHttpErrors: false
+        throwHttpErrors: false,
     });
 
     if (response.statusCode === 200) {
@@ -45,5 +45,5 @@ const getFileFromPages = async (owner, repo, file) => {
 module.exports = {
     getRepository,
     getRepositoryBranch,
-    getFileFromPages
+    getFileFromPages,
 };

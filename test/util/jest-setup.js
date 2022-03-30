@@ -13,13 +13,13 @@ global.expectedRepoName = chance.word();
 global.context = {
     cwd: chance.word(),
     logger: {
-        log: jest.fn()
+        log: jest.fn(),
     },
     nextRelease: {
         version: chance.word(),
-        gitTag: chance.word()
+        gitTag: chance.word(),
     },
     options: {
-        repositoryUrl: `https://github.com/${expectedRepoOwner}/${expectedRepoName}`
-    }
+        repositoryUrl: `https://github.com/${expectedRepoOwner}/${expectedRepoName}`,
+    },
 };

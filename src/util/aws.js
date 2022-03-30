@@ -8,7 +8,7 @@ let stsClient,
 const getSTSClient = (region) => {
     if (!stsClient) {
         stsClient = new STSClient({
-            region
+            region,
         });
     }
 
@@ -18,7 +18,7 @@ const getSTSClient = (region) => {
 const getS3Client = (region) => {
     if (!s3Client) {
         s3Client = new S3Client({
-            region
+            region,
         });
     }
 
@@ -37,7 +37,7 @@ const s3HeadBucket = async (region, bucket) => {
 
     try {
         await client.send(new HeadBucketCommand({
-            Bucket: bucket
+            Bucket: bucket,
         }));
     } catch (error) {
         throw new Error(`${error.$response.body.statusCode} ${error.$response.body.statusMessage}`);
@@ -50,7 +50,7 @@ const s3GetObject = async (region, bucket, key) => {
     try {
         const response = await client.send(new GetObjectCommand({
             Bucket: bucket,
-            Key: key
+            Key: key,
         }));
 
         return await getStream(response.Body);
@@ -69,13 +69,13 @@ const s3PutObject = async (region, bucket, key, body) => {
     await client.send(new PutObjectCommand({
         Bucket: bucket,
         Key: key,
-        Body: body
+        Body: body,
     }));
-}
+};
 
 module.exports = {
     getCallerIdentity,
     s3HeadBucket,
     s3GetObject,
-    s3PutObject
+    s3PutObject,
 };

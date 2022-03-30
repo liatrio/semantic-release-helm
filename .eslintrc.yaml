@@ -1,0 +1,27 @@
+root: true
+env:
+  es2021: true
+  node: true
+  "jest/globals": true
+extends:
+  - "@liatrio/eslint-config"
+parserOptions:
+  ecmaVersion: 11
+rules:
+  "security/detect-non-literal-fs-filename": off
+  "unicorn/prevent-abbreviations": off
+overrides:
+  - files:
+      - "**/*.spec.js"
+      - "test/util/jest-setup.js"
+      - "test/util/helpers.js"
+    globals:
+      chance: readonly
+      context: readonly
+      expectedPagesUrl: readonly
+      expectedRepoName: readonly
+      expectedRepoOwner: readonly
+      when: readonly
+    rules:
+      max-len: off
+      "security/detect-object-injection": off

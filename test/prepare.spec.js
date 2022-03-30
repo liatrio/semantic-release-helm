@@ -22,14 +22,12 @@ describe("prepare", () => {
     let expectedPluginConfig,
         expectedTempDir,
         expectedChartAssets,
-        expectedPagesUrl,
         expectedIndexYamlBody;
 
     beforeEach(async () => {
         expectedPluginConfig = createGitHubPluginConfig();
         expectedTempDir = chance.word();
         expectedChartAssets = chance.n(chance.word, chance.d6());
-        expectedPagesUrl = chance.url() + "/";
         expectedIndexYamlBody = chance.string();
 
         createTempDir.mockResolvedValue(expectedTempDir);
@@ -135,7 +133,7 @@ describe("prepare", () => {
 
         beforeEach(() => {
             expectedPluginConfig = createAWSPluginConfig();
-            expectedS3DownloadPrefix = `${expectedPluginConfig.aws.bucketUrl}/assets`
+            expectedS3DownloadPrefix = `${expectedPluginConfig.aws.bucketUrl}/assets`;
         });
 
         it("should attempt to fetch the existing chart repo index.yaml file from the s3 bucket and write it to a local file", async () => {

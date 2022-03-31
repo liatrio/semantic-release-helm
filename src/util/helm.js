@@ -26,14 +26,16 @@ const helmRepoAddDependencies = async (chartPath) => {
 
     const doc = new YAML(chartYaml.toString());
 
-    await Promise.all(doc.json.dependencies.map(async (dependency) => {
-        // the name doesn't matter, in fact it's better that this doesn't possibly conflict with existing helm repos
-        const name = createHash("sha1").update(JSON.stringify(dependency)).digest("hex");
+    if (doc.json.dependencies) {
+        await Promise.all(doc.json.dependencies.map(async (dependency) => {
+            // the name doesn't matter, in fact it's better that this doesn't possibly conflict with existing helm repos
+            const name = createHash("sha1").update(JSON.stringify(dependency)).digest("hex");
 
-        await execa("helm", ["repo", "add", name, dependency.repository]);
+            await execa("helm", ["repo", "add", name, dependency.repository]);
 
-        helmDependencyRepos.push(name);
-    }));
+            helmDependencyRepos.push(name);
+        }));
+    }
 };
 
 const helmRepoRemoveDependencies = () => Promise.all(helmDependencyRepos.map(async (repository) => {

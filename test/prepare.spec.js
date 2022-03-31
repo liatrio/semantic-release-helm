@@ -14,7 +14,7 @@ const { prepare } = require("../src/prepare");
 const { getFileFromPages } = require("../src/util/github");
 const { createTempDir } = require("../src/util/temp-dir");
 const { getChartAssets } = require("../src/util/chart-assets");
-const { helmPackage, helmRepoIndex, updateHelmChartVersion } = require("../src/util/helm");
+const { helmPackage, helmRepoIndex, updateHelmChartVersion, helmRepoAddDependencies, helmDependencyBuild } = require("../src/util/helm");
 const { createGitHubPluginConfig, createAWSPluginConfig } = require("./util/helpers");
 const { s3GetObject } = require("../src/util/aws");
 
@@ -22,14 +22,12 @@ describe("prepare", () => {
     let expectedPluginConfig,
         expectedTempDir,
         expectedChartAssets,
-        expectedPagesUrl,
         expectedIndexYamlBody;
 
     beforeEach(async () => {
         expectedPluginConfig = createGitHubPluginConfig();
         expectedTempDir = chance.word();
         expectedChartAssets = chance.n(chance.word, chance.d6());
-        expectedPagesUrl = chance.url() + "/";
         expectedIndexYamlBody = chance.string();
 
         createTempDir.mockResolvedValue(expectedTempDir);
@@ -37,6 +35,8 @@ describe("prepare", () => {
         updateHelmChartVersion.mockResolvedValue();
         helmPackage.mockResolvedValue();
         helmRepoIndex.mockResolvedValue();
+        helmRepoAddDependencies.mockResolvedValue();
+        helmDependencyBuild.mockResolvedValue();
 
         getChartAssets.mockResolvedValue(expectedChartAssets);
 
@@ -51,6 +51,19 @@ describe("prepare", () => {
         await prepare(expectedPluginConfig, context);
 
         expect(createTempDir).toHaveBeenCalled();
+    });
+
+    it("should add helm repositories for chart dependencies and download them", async () => {
+        // easier to assert call order when there's only one chart
+        const randomChart = chance.word();
+        expectedPluginConfig.charts = [randomChart];
+
+        await prepare(expectedPluginConfig, context);
+
+        expect(helmRepoAddDependencies).toHaveBeenCalledWith(randomChart);
+        expect(helmDependencyBuild).toHaveBeenCalledWith(randomChart);
+
+        expect(helmRepoAddDependencies).toHaveBeenCalledBefore(helmDependencyBuild);
     });
 
     it("should bump each chart's chart.yaml file, and package each helm chart into a tarball", async () => {
@@ -135,7 +148,7 @@ describe("prepare", () => {
 
         beforeEach(() => {
             expectedPluginConfig = createAWSPluginConfig();
-            expectedS3DownloadPrefix = `${expectedPluginConfig.aws.bucketUrl}/assets`
+            expectedS3DownloadPrefix = `${expectedPluginConfig.aws.bucketUrl}/assets`;
         });
 
         it("should attempt to fetch the existing chart repo index.yaml file from the s3 bucket and write it to a local file", async () => {

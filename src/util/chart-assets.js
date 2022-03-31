@@ -22,14 +22,11 @@ const getChartAssets = async () => {
     return chartAssets;
 };
 
-const deleteChartAssets = (cwd) =>
-    chartAssets
-        ? Promise.all(
-              chartAssets.map(async (asset) => {
-                  await fs.rm(path.join(cwd, asset));
-              })
-          )
-        : Promise.resolve();
+const deleteChartAssets = (cwd) => (chartAssets
+    ? Promise.all(chartAssets.map(async (asset) => {
+        await fs.rm(path.join(cwd, asset));
+    }))
+    : Promise.resolve());
 
 module.exports = {
     getChartAssets,

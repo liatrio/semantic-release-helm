@@ -1,8 +1,8 @@
 const createGitHubPluginConfig = () => ({
     charts: chance.n(chance.word, chance.d6()),
     github: {
-        pagesBranch: chance.word()
-    }
+        pagesBranch: chance.word(),
+    },
 });
 
 const createAWSPluginConfig = () => ({
@@ -10,11 +10,11 @@ const createAWSPluginConfig = () => ({
     aws: {
         region: chance.pickone(["us-east-1", "us-west-1", "us-east-2"]),
         bucket: chance.word(),
-        bucketUrl: chance.url()
+        bucketUrl: chance.url(),
     },
 });
 
 module.exports = {
     createGitHubPluginConfig,
-    createAWSPluginConfig
+    createAWSPluginConfig,
 };

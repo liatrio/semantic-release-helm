@@ -41,7 +41,7 @@ describe("publish", () => {
             // the arguments are slightly different since this is being invoked via `util.promisify`
             expect(ghpages.publish).toHaveBeenCalledWith(expectedTempDir, {
                 branch: expectedPluginConfig.github.pagesBranch,
-                src: "index.yaml"
+                src: "index.yaml",
             }, expect.any(Function));
         });
 
@@ -81,7 +81,7 @@ describe("publish", () => {
             await publish(expectedPluginConfig, context);
 
             expectedChartAssets.forEach((expectedChartAsset, i) => {
-                expect(s3PutObject).toHaveBeenCalledWith(expectedPluginConfig.aws.region, expectedPluginConfig.aws.bucket, `assets/${expectedChartAsset}`, expectedChartTarballs[i])
+                expect(s3PutObject).toHaveBeenCalledWith(expectedPluginConfig.aws.region, expectedPluginConfig.aws.bucket, `assets/${expectedChartAsset}`, expectedChartTarballs[i]);
             });
         });
 
